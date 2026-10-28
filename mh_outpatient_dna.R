@@ -112,6 +112,10 @@ simd_lookup <- get_simd_postcode() |>
 specialty_lookup <- read_xlsx(glue(data_folder, "SMR00_Specialty_Lookup.xlsx")) |> 
   clean_names()
 
+select_specialties_names <- specialty_lookup |> 
+  filter(specialty %in% select_specialties) |> 
+  pull(specialty_description)
+
 # Extraction --------------------------------------------------------------
 
 channel <- dbConnect(odbc(), dsn="SMRA",
@@ -141,21 +145,21 @@ smr00_test <- dbGetQuery(
 
 ### all appointments
 
-all_appointments_total_raw <- dbGetQuery(
-  channel,
-  statement = "
-    SELECT 
-      SPECIALTY,
-      COUNT(*) AS TOTAL_APPOINTMENTS
-    FROM ANALYSIS.SMR00_PI
-    WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
-      AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
-      AND GP_PRACTICE_CODE IN (' 16211', '16211')
-      AND REFERRAL_SOURCE = '1'
-    GROUP BY SPECIALTY
-    ORDER BY SPECIALTY
-  "
-)
+# all_appointments_total_raw <- dbGetQuery(
+#   channel,
+#   statement = "
+#     SELECT 
+#       SPECIALTY,
+#       COUNT(*) AS TOTAL_APPOINTMENTS
+#     FROM ANALYSIS.SMR00_PI
+#     WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
+#       AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
+#       AND GP_PRACTICE_CODE IN (' 16211', '16211')
+#       AND REFERRAL_SOURCE = '1'
+#     GROUP BY SPECIALTY
+#     ORDER BY SPECIALTY
+#   "
+# )
 
 
 
@@ -240,6 +244,6 @@ source("wrangle.R")
 rmarkdown::render(
   input = "mh_op_dna_markdown.Rmd",
   output_format = "html_document",
-  output_file = "Mental Health Outpatient Appointment Rate.html",
+  output_file = "The Tweed Mental Health Outpatient Report.html",
   output_dir = data_folder
 )

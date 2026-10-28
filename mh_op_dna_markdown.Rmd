@@ -1,11 +1,16 @@
 ---
-title: "Outpatient DNA Rate"
+title: "The Tweed MH Outpatient Appointment DNA Report"
 # date: "`r ymd(today())`"
 output:
   html_document:
     theme: default
 ---
 
+<style>
+h1.title {
+  display: none;
+}
+</style>
 
 ```{r include=FALSE}
 
@@ -14,34 +19,74 @@ output:
 #                               # key = "specialty",
 #                               group = ~specialty_description)
 
-all_spec_simd_pivot2 <- all_spec_simd_pivot |>
-  mutate(row_id = row_number(),
+#factorise the specialty description so it appears as a list in the datatable filter
+all_spec_simd_dnaper_pivot2 <- all_spec_simd_dnaper_pivot |>
+  mutate(#row_id = row_number(),
          `Specialty Description` = factor(`Specialty Description`))
 
-shared_data <- SharedData$new(
-  all_spec_simd_pivot2,
-  key = ~row_id,
-  group = "appointments"
-)
+all_spec_simd_appt_pivot2 <- all_spec_simd_appt_pivot |>
+  mutate(#row_id = row_number(),
+         `Specialty Description` = factor(`Specialty Description`))
+
+
+
+# shared_data <- SharedData$new(
+#   all_spec_simd_pivot2,
+#   key = ~row_id,
+#   group = "appointments"
+# )
+
+```
+<div style="color: #c00000; font-size: 24px; font-weight: bold; text-align: center; margin: 20px 0;">
+MANAGEMENT INFORMATION - NOT FOR FORWARD DISTRIBUTION
+</div>
+
+# The Tweed Mental Health Outpatient Appointment DNA Report
+
+## Background
+
+The following document shows GP outpatient appointments referred by The Tweed, with a focus on the DNA rate of Mental Health specialties. 
+
+**Source**: SMR00 (Outpatients), Public Health Scotland
+
+**Date of extraction**: `r pretty_date(today())`
+
+**Period of interest**: January 2023 to December 2025 [Inclusive]
+
+**Contacts (LIST analyst(s))**: 
+
+- Andrew Massie, Andrew.Massie2@phs.scot, Principal Information Analyst
+
+- Bradley Roy, bradley.roy@phs.scot, Senior Information Analyst
+
+### Methodology
+
+Specialties selected for the Mental Health grouping: 
+```{r, echo=FALSE, fig.height=8, results='asis'}
+
+cat("\n\n", paste0("- ", select_specialties_names, collapse = "\n"), "\n\n")
 
 ```
 
 
+Not all the specialties included in the Mental Health grouping appear in this analysis. In the extract used for this analysis the following specialties appeared in the Mental Health group: 
+```{r, echo=FALSE, fig.height=8, results='asis'}
 
-## Background
+cat("\n\n", paste0("- ", mh_group_selection, collapse = "\n"), "\n\n")
 
-The following document shows the outpatient DNA rate for The Tweed. 
+```
 
-Source: SMR00 (Outpatients), Public Health Scotland
+The data has been filtered to only include specialties which have equal or over 20 appointments within the 3 year period of interest (2023 to 2025 [inclusive]). This is also the case for the "All Specialties" group. 
 
-Date of extraction: `r pretty_date(today())`
+This report uses the latest available SIMD data (2020v2). SIMD is separated into groups (usually quintiles), from most deprived (SIMD 1) to least deprived (SIMD 5). For further information please see the [Scottish Index of Multiple Deprivation: data and resources](https://www.gov.scot/collections/scottish-index-of-multiple-deprivation-2020/) section on the Scottish Government website.
 
-Period of interest: January 2023 to December 2025 [Inclusive]
+**Note**: These charts are interactive. Hover over the chart for more information, or click items in the legend to show or hide categories. Double-click a legend item to focus on that category alone. Use the chart toolbar to zoom or reset the view.
 
-Codes selected for the Mental Health grouping: `r select_specialties`
+<div style="height: 30px;"></div>
 
 
-## Appointments by Specialty, 2023-2025 Calendar Years {.tabset .tabset-fade}
+
+## Appointments by Specialty, for Calendar Years 2023-2025 {.tabset .tabset-fade}
 
 ### Number of Appointments
 ```{r, echo=FALSE, fig.height=8}
@@ -65,41 +110,80 @@ all_specialties_dnaper_chart
 ```
 
 
+<div style="height: 30px;"></div>
 
 
+## Number of Appointments and DNA Percentage by SIMD and Year {.tabset .tabset-fade}
 
-
-## DNA Rate Table - SIMD and Year
+### Percentage of DNAs
 
 ```{r, echo=FALSE}
 
-filter_select(
-  id = "specialty_filter",
-  label = "Select Specialty",
-  sharedData = shared_data,
-  group = all_spec_simd_pivot2$`Specialty Description`
-)
+# filter_select(
+#   id = "specialty_filter",
+#   label = "Select Specialty",
+#   sharedData = shared_data,
+#   group = all_spec_simd_pivot2$`Specialty Description`
+# )
 
 # Create table using the SharedData object
+# datatable(
+#   all_spec_simd_dnaper_pivot2,
+#   rownames = FALSE,
+#   filter = "top",
+#   options = list(
+#     # pageLength = 10,
+#     scrollX = TRUE
+#     # columnDefs = list(
+#     #   list(
+#     #     targets = 5,
+#     #     visible = FALSE
+#     #   )
+#     # )
+#   )
+# )
+
+
 datatable(
-  shared_data,
+  all_spec_simd_dnaper_pivot2,
   rownames = FALSE,
   filter = "top",
+  extensions = 'Buttons',
   options = list(
-    # pageLength = 10,
-    scrollX = TRUE,
-    columnDefs = list(
-      list(
-        targets = 5,
-        visible = FALSE
-      )
+    dom = 'frtipB', # 'B' at the end places buttons at the bottom
+    buttons = c('copy', 'csv', 'excel', 'pdf'),
+    scrollX = TRUE
     )
-  )
 )
 
 ```
 
 
+### Number of Appointments
+
+```{r, echo=FALSE}
+
+datatable(
+  all_spec_simd_appt_pivot2,
+  rownames = FALSE,
+  filter = "top",
+  extensions = 'Buttons',
+  options = list(
+    dom = 'frtipB', # 'B' at the end places buttons at the bottom
+    buttons = c('copy', 'csv', 'excel', 'pdf'),
+    scrollX = TRUE
+    )
+)
+
+```
 
 
+<div style="height: 50px;"></div>
+
+
+## DNA Percentage by SIMD, for Calendar Years 2023-2025 {.tabset .tabset-fade}
+
+```{r echo = FALSE}
+simd_mh_spec_chart
+```
 
