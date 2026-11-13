@@ -41,6 +41,8 @@ keep_specialties_list <- all_appointments_raw |>
 
 ## all appointments by Year and SIMD
 all_appointments_simd <- all_appointments_raw |> 
+  bind_rows(all_appointments_raw_borders) |>
+  bind_rows(all_appointments_raw_scotland) |> 
   clean_names() |> 
   left_join(
     simd_lookup,
@@ -61,7 +63,7 @@ all_appointments_simd <- all_appointments_raw |>
 
 # Practice DNA Rate
 all_dna_summary <- all_appointments_simd %>%
-  group_by() %>%
+  group_by(location) %>%
   summarise(total_appointments =  sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -71,10 +73,11 @@ all_dna_summary <- all_appointments_simd %>%
 #specialty
 #mental health group
 all_spec_simd_summary_mh <- all_appointments_simd %>%
+  filter(location == "The Tweed") |> 
   filter(specialty %in% select_specialties) |> 
   mutate(specialty_description = "Mental Health (Grouped)",
          selections = "Mental Health (Grouped)") |> 
-  group_by(specialty_description, selections) %>%
+  group_by(location, specialty_description, selections) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -86,7 +89,7 @@ all_spec_simd_summary_mh <- all_appointments_simd %>%
 all_spec_simd_summary_all <- all_appointments_simd %>% 
   mutate(specialty_description = "All Specialties",
          selections = "All Specialties") |> 
-  group_by(specialty_description, selections) %>%
+  group_by(location, specialty_description, selections) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -96,14 +99,15 @@ all_spec_simd_summary_all <- all_appointments_simd %>%
 
 #standard names group
 all_spec_simd_summary <- all_appointments_simd %>%
-  group_by(specialty_description, selections) %>%
+  group_by(location, specialty_description, selections) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
   mutate(dna_percent_chart = dna_count / total_appointments,
          dna_percent = percent(dna_count / total_appointments, .1)) %>%
   arrange(desc(dna_percent)) |> 
-  bind_rows(all_spec_simd_summary_mh, all_spec_simd_summary_all)
+  bind_rows(all_spec_simd_summary_mh, all_spec_simd_summary_all) |> 
+  filter(location == "The Tweed") 
 
 all_specialties_chart <- all_spec_simd_summary |> 
   filter(!specialty_description %in% c("All Specialties", "Mental Health (Grouped)")) |> 
@@ -149,7 +153,7 @@ all_specialties_dnaper_chart <- plot_ly(data = all_spec_simd_summary,
 all_spec_simd_year_mh <- all_appointments_simd %>%
   filter(specialty %in% select_specialties) |> 
   mutate(specialty_description = "Mental Health (Grouped)") |> 
-  group_by(date_year, specialty_description, simd_quintile) %>%
+  group_by(location, date_year, specialty_description, simd_quintile) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -158,7 +162,7 @@ all_spec_simd_year_mh <- all_appointments_simd %>%
 
 all_spec_simd_year_all <- all_appointments_simd %>%
   mutate(specialty_description = "All Specialties") |> 
-  group_by(date_year, specialty_description, simd_quintile) %>%
+  group_by(location, date_year, specialty_description, simd_quintile) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -167,7 +171,7 @@ all_spec_simd_year_all <- all_appointments_simd %>%
 
 
 all_spec_simd_year <- all_appointments_simd %>%
-  group_by(date_year, specialty_description, simd_quintile) %>%
+  group_by(location, date_year, specialty_description, simd_quintile) %>%
   summarise(total_appointments = n(),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -184,22 +188,22 @@ mh_group_selection <- all_appointments_simd |>
 #test table to check formatting
 all_spec_simd_dnaper_pivot <- all_spec_simd_year |>
   # filter(specialty_description == "General Psychiatry") |>
-  select(specialty_description, date_year, simd_quintile, dna_percent) |>
+  select(location, specialty_description, date_year, simd_quintile, dna_percent) |>
   pivot_wider(names_from = date_year, values_from = dna_percent) |>
-  arrange(specialty_description, simd_quintile) |>
+  arrange(location, specialty_description, simd_quintile) |>
   filter(!is.na(simd_quintile)) |>
-  select(specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
+  select(location, specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
   rename(`Specialty Description` = specialty_description,
          `SIMD Quintile` = simd_quintile)
 
 
 all_spec_simd_appt_pivot <- all_spec_simd_year |>
   # filter(specialty_description == "General Psychiatry") |>
-  select(specialty_description, date_year, simd_quintile, total_appointments) |>
+  select(location, specialty_description, date_year, simd_quintile, total_appointments) |>
   pivot_wider(names_from = date_year, values_from = total_appointments) |>
-  arrange(specialty_description, simd_quintile) |>
+  arrange(location, specialty_description, simd_quintile) |>
   filter(!is.na(simd_quintile)) |>
-  select(specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
+  select(location, specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
   rename(`Specialty Description` = specialty_description,
          `SIMD Quintile` = simd_quintile)
 
@@ -208,7 +212,8 @@ all_spec_simd_appt_pivot <- all_spec_simd_year |>
 # SIMD Chart --------------------------------------------------------------
 
 simd_mh_spec_data <- all_spec_simd_year |> 
-  filter(specialty_description %in% c("All Specialties", "Mental Health (Grouped)")) |> 
+  filter(specialty_description %in% c("All Specialties", "Mental Health (Grouped)"),
+         location == "The Tweed") |> 
   group_by(specialty_description, simd_quintile) |> 
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(dna_count),
@@ -234,3 +239,50 @@ simd_mh_spec_chart <- plot_ly(data = simd_mh_spec_data,
          hovermode = "x unified")
 
 
+# Mode of Clinic Attendance -----------------------------------------------
+colnames(all_appointments_mode_raw)
+
+all_appointments_mode_atten <- all_appointments_mode_raw |> 
+  clean_names() |> 
+  filter(specialty %in% keep_specialties_list) |> 
+  left_join(specialty_lookup) |> 
+  mutate(date_year = year(clinic_date)) |> 
+  group_by(specialty_description, clinic_attendance, mode_of_clinical_interaction) |> 
+  summarise(value = sum(total_appointments)) |> 
+  ungroup() |> 
+  filter(clinic_attendance == 1) |> 
+  group_by(specialty_description) |> 
+  mutate(total_appt = sum(value)) |>
+  ungroup() |> 
+  mutate(perc = value / total_appt) |> 
+  mutate(mode_of_clin = case_when(mode_of_clinical_interaction == 1 ~ "Face to Face",
+                                  mode_of_clinical_interaction == 2 ~ "Telephone",
+                                  mode_of_clinical_interaction == 3 ~ "Videolink",
+                                  mode_of_clinical_interaction == 4 ~ "Written")) 
+
+specialty_order <- all_appointments_mode_atten %>%
+  filter(mode_of_clin == "Face to Face") %>%
+  arrange(perc) %>%
+  pull(specialty_description)
+
+spec_mode_of_contact <- plot_ly(data = all_appointments_mode_atten,
+                                        x = ~perc,
+                                        y = ~specialty_description,
+                                        color = ~mode_of_clin,
+                                        colors = chart_cols,
+                                        type = 'bar') %>%
+  layout(xaxis = list(title = "Percentage",
+                      tickformat = ".0%"),
+         yaxis = list(title = "", 
+                      categoryorder = "array",
+                      categoryarray = specialty_order),
+         barmode = 'stack',
+         hovermode = "y unified")
+
+
+
+  
+  
+  
+  
+  
