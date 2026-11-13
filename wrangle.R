@@ -41,6 +41,8 @@ keep_specialties_list <- all_appointments_raw |>
 
 ## all appointments by Year and SIMD
 all_appointments_simd <- all_appointments_raw |> 
+  bind_rows(all_appointments_raw_borders) |>
+  bind_rows(all_appointments_raw_scotland) |> 
   clean_names() |> 
   left_join(
     simd_lookup,
@@ -61,7 +63,7 @@ all_appointments_simd <- all_appointments_raw |>
 
 # Practice DNA Rate
 all_dna_summary <- all_appointments_simd %>%
-  group_by() %>%
+  group_by(location) %>%
   summarise(total_appointments =  sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -71,10 +73,11 @@ all_dna_summary <- all_appointments_simd %>%
 #specialty
 #mental health group
 all_spec_simd_summary_mh <- all_appointments_simd %>%
+  filter(location == "The Tweed") |> 
   filter(specialty %in% select_specialties) |> 
   mutate(specialty_description = "Mental Health (Grouped)",
          selections = "Mental Health (Grouped)") |> 
-  group_by(specialty_description, selections) %>%
+  group_by(location, specialty_description, selections) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -86,7 +89,7 @@ all_spec_simd_summary_mh <- all_appointments_simd %>%
 all_spec_simd_summary_all <- all_appointments_simd %>% 
   mutate(specialty_description = "All Specialties",
          selections = "All Specialties") |> 
-  group_by(specialty_description, selections) %>%
+  group_by(location, specialty_description, selections) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -96,14 +99,15 @@ all_spec_simd_summary_all <- all_appointments_simd %>%
 
 #standard names group
 all_spec_simd_summary <- all_appointments_simd %>%
-  group_by(specialty_description, selections) %>%
+  group_by(location, specialty_description, selections) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
   mutate(dna_percent_chart = dna_count / total_appointments,
          dna_percent = percent(dna_count / total_appointments, .1)) %>%
   arrange(desc(dna_percent)) |> 
-  bind_rows(all_spec_simd_summary_mh, all_spec_simd_summary_all)
+  bind_rows(all_spec_simd_summary_mh, all_spec_simd_summary_all) |> 
+  filter(location == "The Tweed") 
 
 all_specialties_chart <- all_spec_simd_summary |> 
   filter(!specialty_description %in% c("All Specialties", "Mental Health (Grouped)")) |> 
@@ -149,7 +153,7 @@ all_specialties_dnaper_chart <- plot_ly(data = all_spec_simd_summary,
 all_spec_simd_year_mh <- all_appointments_simd %>%
   filter(specialty %in% select_specialties) |> 
   mutate(specialty_description = "Mental Health (Grouped)") |> 
-  group_by(date_year, specialty_description, simd_quintile) %>%
+  group_by(location, date_year, specialty_description, simd_quintile) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -158,7 +162,7 @@ all_spec_simd_year_mh <- all_appointments_simd %>%
 
 all_spec_simd_year_all <- all_appointments_simd %>%
   mutate(specialty_description = "All Specialties") |> 
-  group_by(date_year, specialty_description, simd_quintile) %>%
+  group_by(location, date_year, specialty_description, simd_quintile) %>%
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -167,7 +171,7 @@ all_spec_simd_year_all <- all_appointments_simd %>%
 
 
 all_spec_simd_year <- all_appointments_simd %>%
-  group_by(date_year, specialty_description, simd_quintile) %>%
+  group_by(location, date_year, specialty_description, simd_quintile) %>%
   summarise(total_appointments = n(),
             dna_count = sum(clinic_attendance == 8, na.rm = TRUE),
             .groups = "drop") %>%
@@ -184,22 +188,22 @@ mh_group_selection <- all_appointments_simd |>
 #test table to check formatting
 all_spec_simd_dnaper_pivot <- all_spec_simd_year |>
   # filter(specialty_description == "General Psychiatry") |>
-  select(specialty_description, date_year, simd_quintile, dna_percent) |>
+  select(location, specialty_description, date_year, simd_quintile, dna_percent) |>
   pivot_wider(names_from = date_year, values_from = dna_percent) |>
-  arrange(specialty_description, simd_quintile) |>
+  arrange(location, specialty_description, simd_quintile) |>
   filter(!is.na(simd_quintile)) |>
-  select(specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
+  select(location, specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
   rename(`Specialty Description` = specialty_description,
          `SIMD Quintile` = simd_quintile)
 
 
 all_spec_simd_appt_pivot <- all_spec_simd_year |>
   # filter(specialty_description == "General Psychiatry") |>
-  select(specialty_description, date_year, simd_quintile, total_appointments) |>
+  select(location, specialty_description, date_year, simd_quintile, total_appointments) |>
   pivot_wider(names_from = date_year, values_from = total_appointments) |>
-  arrange(specialty_description, simd_quintile) |>
+  arrange(location, specialty_description, simd_quintile) |>
   filter(!is.na(simd_quintile)) |>
-  select(specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
+  select(location, specialty_description, simd_quintile, `2023`, `2024`, `2025`) |> 
   rename(`Specialty Description` = specialty_description,
          `SIMD Quintile` = simd_quintile)
 

@@ -180,7 +180,49 @@ all_appointments_raw <- dbGetQuery(
     GROUP BY CLINIC_DATE, POSTCODE, SPECIALTY, CLINIC_ATTENDANCE
     ORDER BY SPECIALTY
   "
-)
+) |> 
+  mutate(Location = "The Tweed")
+
+all_appointments_raw_borders <- dbGetQuery(
+  channel,
+  statement = "
+    SELECT 
+      SPECIALTY,
+      COUNT(*) AS TOTAL_APPOINTMENTS,
+      CLINIC_DATE,
+      POSTCODE,
+      CLINIC_ATTENDANCE
+    FROM ANALYSIS.SMR00_PI
+    WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
+      AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
+      AND HSCP_2019 = 'S37000025'
+      AND REFERRAL_SOURCE = '1'
+    GROUP BY CLINIC_DATE, POSTCODE, SPECIALTY, CLINIC_ATTENDANCE
+    ORDER BY SPECIALTY
+  "
+) |> 
+  mutate(Location = "Scottish Borders")
+
+all_appointments_raw_scotland <- dbGetQuery(
+  channel,
+  statement = "
+    SELECT 
+      SPECIALTY,
+      COUNT(*) AS TOTAL_APPOINTMENTS,
+      CLINIC_DATE,
+      POSTCODE,
+      CLINIC_ATTENDANCE
+    FROM ANALYSIS.SMR00_PI
+    WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
+      AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
+      AND REFERRAL_SOURCE = '1'
+    GROUP BY CLINIC_DATE, POSTCODE, SPECIALTY, CLINIC_ATTENDANCE
+    ORDER BY SPECIALTY
+  "
+) |> 
+  mutate(Location = "Scotland")
+
+
 
 # Referral Source, 1 = GP
 # Specialities:
@@ -244,6 +286,6 @@ source("wrangle.R")
 rmarkdown::render(
   input = "mh_op_dna_markdown.Rmd",
   output_format = "html_document",
-  output_file = "The Tweed Mental Health Outpatient Report.html",
+  output_file = "The Tweed Mental Health Outpatient Report v2.html",
   output_dir = data_folder
 )

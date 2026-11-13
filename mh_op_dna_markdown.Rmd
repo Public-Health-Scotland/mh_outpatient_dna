@@ -86,7 +86,7 @@ This report uses the latest available SIMD data (2020v2). SIMD is separated into
 
 
 
-## Appointments by Specialty, for Calendar Years 2023-2025 {.tabset .tabset-fade}
+## The Tweed: Appointments by Specialty, for Calendar Years 2023-2025 {.tabset .tabset-fade}
 
 ### Number of Appointments
 ```{r, echo=FALSE, fig.height=8}
@@ -113,7 +113,7 @@ all_specialties_dnaper_chart
 <div style="height: 30px;"></div>
 
 
-## Number of Appointments and DNA Percentage by SIMD and Year {.tabset .tabset-fade}
+## Number of Appointments and DNA Percentage by SIMD and Year (Scotland, Scottish Borders, and The Tweed) {.tabset .tabset-fade}
 
 ### Percentage of DNAs
 
@@ -181,7 +181,7 @@ datatable(
 <div style="height: 50px;"></div>
 
 
-## DNA Percentage by SIMD, for Calendar Years 2023-2025 {.tabset .tabset-fade}
+## The Tweed: DNA Percentage by SIMD, for Calendar Years 2023-2025 {.tabset .tabset-fade}
 
 ```{r echo = FALSE}
 simd_mh_spec_chart
