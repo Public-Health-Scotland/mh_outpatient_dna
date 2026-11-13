@@ -26,6 +26,11 @@ library(glue)
 library(crosstalk)
 library(DT)
 
+
+start_date <- dmy('01-01-2023')
+end_date   <- dmy('31-12-2025')
+
+
 data_folder <- "/conf/LIST_analytics/Borders/Missingness/Tweed/"
 
 
@@ -132,15 +137,17 @@ check_col <- data.frame(colnames(list_of_smr00_columns))
 
 smr00_test <- dbGetQuery(
   channel,
-  statement = "
+  statement = glue("
     SELECT *
     FROM ANALYSIS.SMR00_PI
-    WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
-      AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
+    WHERE CLINIC_DATE >= TO_DATE('{start_date}', 'YYYY-MM-DD')
+      AND CLINIC_DATE <  TO_DATE('{end_date}', 'YYYY-MM-DD')
     AND GP_PRACTICE_CODE IN (' 16211', '16211') 
     AND ROWNUM <= 500
   "
 )
+)
+
 
 
 ### all appointments
@@ -165,7 +172,7 @@ smr00_test <- dbGetQuery(
 
 all_appointments_raw <- dbGetQuery(
   channel,
-  statement = "
+  statement = glue("
     SELECT 
       SPECIALTY,
       COUNT(*) AS TOTAL_APPOINTMENTS,
@@ -173,19 +180,20 @@ all_appointments_raw <- dbGetQuery(
       POSTCODE,
       CLINIC_ATTENDANCE
     FROM ANALYSIS.SMR00_PI
-    WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
-      AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
+    WHERE CLINIC_DATE >= TO_DATE('{start_date}', 'YYYY-MM-DD')
+      AND CLINIC_DATE <  TO_DATE('{end_date}', 'YYYY-MM-DD')
       AND GP_PRACTICE_CODE IN (' 16211', '16211')
       AND REFERRAL_SOURCE = '1'
     GROUP BY CLINIC_DATE, POSTCODE, SPECIALTY, CLINIC_ATTENDANCE
     ORDER BY SPECIALTY
   "
+)
 ) |> 
   mutate(Location = "The Tweed")
 
 all_appointments_raw_borders <- dbGetQuery(
   channel,
-  statement = "
+  statement = glue("
     SELECT 
       SPECIALTY,
       COUNT(*) AS TOTAL_APPOINTMENTS,
@@ -193,19 +201,20 @@ all_appointments_raw_borders <- dbGetQuery(
       POSTCODE,
       CLINIC_ATTENDANCE
     FROM ANALYSIS.SMR00_PI
-    WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
-      AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
+    WHERE CLINIC_DATE >= TO_DATE('{start_date}', 'YYYY-MM-DD')
+      AND CLINIC_DATE <  TO_DATE('{end_date}', 'YYYY-MM-DD')
       AND HSCP_2019 = 'S37000025'
       AND REFERRAL_SOURCE = '1'
     GROUP BY CLINIC_DATE, POSTCODE, SPECIALTY, CLINIC_ATTENDANCE
     ORDER BY SPECIALTY
   "
+)
 ) |> 
   mutate(Location = "Scottish Borders")
 
 all_appointments_raw_scotland <- dbGetQuery(
   channel,
-  statement = "
+  statement = glue("
     SELECT 
       SPECIALTY,
       COUNT(*) AS TOTAL_APPOINTMENTS,
@@ -213,12 +222,13 @@ all_appointments_raw_scotland <- dbGetQuery(
       POSTCODE,
       CLINIC_ATTENDANCE
     FROM ANALYSIS.SMR00_PI
-    WHERE CLINIC_DATE >= TO_DATE('01/01/2023', 'DD/MM/YYYY')
-      AND CLINIC_DATE < TO_DATE('31/12/2025', 'DD/MM/YYYY')
+    WHERE CLINIC_DATE >= TO_DATE('{start_date}', 'YYYY-MM-DD')
+      AND CLINIC_DATE <  TO_DATE('{end_date}', 'YYYY-MM-DD')
       AND REFERRAL_SOURCE = '1'
     GROUP BY CLINIC_DATE, POSTCODE, SPECIALTY, CLINIC_ATTENDANCE
     ORDER BY SPECIALTY
   "
+)
 ) |> 
   mutate(Location = "Scotland")
 
@@ -272,6 +282,31 @@ all_appointments_raw_scotland <- dbGetQuery(
 #       )
 #   "
 # )
+
+
+# mode of contact ---------------------------------------------------------
+
+all_appointments_mode_raw <- dbGetQuery(
+  channel,
+  statement = glue("
+    SELECT 
+      SPECIALTY,
+      COUNT(*) AS TOTAL_APPOINTMENTS,
+      CLINIC_DATE,
+      POSTCODE,
+      CLINIC_ATTENDANCE,
+      MODE_OF_CLINICAL_INTERACTION
+    FROM ANALYSIS.SMR00_PI
+    WHERE CLINIC_DATE >= TO_DATE('{start_date}', 'YYYY-MM-DD')
+      AND CLINIC_DATE <  TO_DATE('{end_date}', 'YYYY-MM-DD')
+      AND GP_PRACTICE_CODE IN (' 16211', '16211')
+      AND REFERRAL_SOURCE = '1'
+    GROUP BY CLINIC_DATE, POSTCODE, SPECIALTY, CLINIC_ATTENDANCE, MODE_OF_CLINICAL_INTERACTION
+    ORDER BY SPECIALTY
+  "
+)
+)
+
 
 
 #Source wrangling code

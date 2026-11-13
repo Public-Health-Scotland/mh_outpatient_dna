@@ -187,3 +187,13 @@ datatable(
 simd_mh_spec_chart
 ```
 
+
+
+## The Tweed: Percentage of Arrived Appointments by Specialty and Mode of Contact, January 2023 to December 2025 [Inclusive] {.tabset .tabset-fade}
+
+```{r, echo=FALSE}
+
+spec_mode_of_contact
+
+```
+

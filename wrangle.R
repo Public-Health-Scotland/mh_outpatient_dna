@@ -212,7 +212,8 @@ all_spec_simd_appt_pivot <- all_spec_simd_year |>
 # SIMD Chart --------------------------------------------------------------
 
 simd_mh_spec_data <- all_spec_simd_year |> 
-  filter(specialty_description %in% c("All Specialties", "Mental Health (Grouped)")) |> 
+  filter(specialty_description %in% c("All Specialties", "Mental Health (Grouped)"),
+         location == "The Tweed") |> 
   group_by(specialty_description, simd_quintile) |> 
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(dna_count),
@@ -238,3 +239,50 @@ simd_mh_spec_chart <- plot_ly(data = simd_mh_spec_data,
          hovermode = "x unified")
 
 
+# Mode of Clinic Attendance -----------------------------------------------
+colnames(all_appointments_mode_raw)
+
+all_appointments_mode_atten <- all_appointments_mode_raw |> 
+  clean_names() |> 
+  filter(specialty %in% keep_specialties_list) |> 
+  left_join(specialty_lookup) |> 
+  mutate(date_year = year(clinic_date)) |> 
+  group_by(specialty_description, clinic_attendance, mode_of_clinical_interaction) |> 
+  summarise(value = sum(total_appointments)) |> 
+  ungroup() |> 
+  filter(clinic_attendance == 1) |> 
+  group_by(specialty_description) |> 
+  mutate(total_appt = sum(value)) |>
+  ungroup() |> 
+  mutate(perc = value / total_appt) |> 
+  mutate(mode_of_clin = case_when(mode_of_clinical_interaction == 1 ~ "Face to Face",
+                                  mode_of_clinical_interaction == 2 ~ "Telephone",
+                                  mode_of_clinical_interaction == 3 ~ "Videolink",
+                                  mode_of_clinical_interaction == 4 ~ "Written")) 
+
+specialty_order <- all_appointments_mode_atten %>%
+  filter(mode_of_clin == "Face to Face") %>%
+  arrange(perc) %>%
+  pull(specialty_description)
+
+spec_mode_of_contact <- plot_ly(data = all_appointments_mode_atten,
+                                        x = ~perc,
+                                        y = ~specialty_description,
+                                        color = ~mode_of_clin,
+                                        colors = chart_cols,
+                                        type = 'bar') %>%
+  layout(xaxis = list(title = "Percentage",
+                      tickformat = ".0%"),
+         yaxis = list(title = "", 
+                      categoryorder = "array",
+                      categoryarray = specialty_order),
+         barmode = 'stack',
+         hovermode = "y unified")
+
+
+
+  
+  
+  
+  
+  
