@@ -212,23 +212,28 @@ all_spec_simd_appt_pivot <- all_spec_simd_year |>
 # SIMD Chart --------------------------------------------------------------
 
 simd_mh_spec_data <- all_spec_simd_year |> 
-  filter(specialty_description %in% c("All Specialties", "Mental Health (Grouped)"),
-         location == "The Tweed") |> 
-  group_by(specialty_description, simd_quintile) |> 
+  filter(specialty_description %in% c("All Specialties", "Mental Health (Grouped)")) |> 
+  group_by(location, specialty_description, simd_quintile) |> 
   summarise(total_appointments = sum(total_appointments),
             dna_count = sum(dna_count),
             .groups = "drop") %>%
   mutate(dna_percent = percent(dna_count / total_appointments, .1),
-         dna_percent_chart = dna_count / total_appointments)
+         dna_percent_chart = dna_count / total_appointments)  |> 
+  mutate(loc_spec = glue("{location} - {specialty_description}"))
+
+simd_mh_spec_data_order <- simd_mh_spec_data |> 
+  distinct(loc_spec) |> 
+  pull(loc_spec)
 
 simd_mh_spec_chart <- plot_ly(data = simd_mh_spec_data,
-                                        x = ~specialty_description,
+                                        x = ~loc_spec,
                                         y = ~dna_percent_chart ,
                                         color = ~simd_quintile,
                                         colors = chart_cols,
                                         type = 'bar') %>%
   layout(xaxis = list(title = "",
-                      categoryorder = "total ascending"),
+                      categoryorder = "array",
+                      categoryarray = simd_mh_spec_data_order),
          yaxis = list(title = "DNA Percentage",
                       tickformat = ".1%" ),
          legend = list(

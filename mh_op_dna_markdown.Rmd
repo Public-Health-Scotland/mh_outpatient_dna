@@ -10,6 +10,18 @@ output:
 h1.title {
   display: none;
 }
+
+body {
+  counter-reset: h2counter;
+}
+
+h2 {
+  counter-increment: h2counter;
+}
+
+h2::before {
+  content: counter(h2counter) ". ";
+}
 </style>
 
 ```{r include=FALSE}
@@ -181,7 +193,7 @@ datatable(
 <div style="height: 50px;"></div>
 
 
-## The Tweed: DNA Percentage by SIMD, for Calendar Years 2023-2025 {.tabset .tabset-fade}
+## DNA Percentage by SIMD, for Calendar Years 2023-2025 {.tabset .tabset-fade}
 
 ```{r echo = FALSE}
 simd_mh_spec_chart
