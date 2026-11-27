@@ -221,9 +221,13 @@ simd_mh_spec_data <- all_spec_simd_year |>
          dna_percent_chart = dna_count / total_appointments)  |> 
   mutate(loc_spec = glue("{location} - {specialty_description}"))
 
-simd_mh_spec_data_order <- simd_mh_spec_data |> 
-  distinct(loc_spec) |> 
-  pull(loc_spec)
+# simd_mh_spec_data_order <- simd_mh_spec_data |> 
+#   distinct(loc_spec) |> 
+#   pull(loc_spec)
+
+simd_spec_order <- simd_mh_spec_data |>
+  distinct(location) |>
+  pull(location)
 
 simd_mh_spec_chart <- plot_ly(data = simd_mh_spec_data,
                                         x = ~loc_spec,
@@ -233,7 +237,7 @@ simd_mh_spec_chart <- plot_ly(data = simd_mh_spec_data,
                                         type = 'bar') %>%
   layout(xaxis = list(title = "",
                       categoryorder = "array",
-                      categoryarray = simd_mh_spec_data_order),
+                      categoryarray = simd_spec_order),
          yaxis = list(title = "DNA Percentage",
                       tickformat = ".1%" ),
          legend = list(
